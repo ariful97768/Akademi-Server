@@ -33,7 +33,7 @@ async function run() {
         const userCollection = database.collection('Users')
         const reviewCollection = database.collection('Reviews')
 
-        // use verify admin after verifyToken
+        // verify admin 
         const verifyAdmin = async (req, res, next) => {
             const email = req.decoded.email;
             const query = { email: email };
@@ -68,7 +68,11 @@ async function run() {
             const result = await userCollection.insertOne({ userName: data.displayName, userEmail: data.email, role: 'user' })
             res.send(result)
         })
-        //////// user related //////// 
+
+        app.get('/users/:email', async (req, res) => {
+            const result = await userCollection.findOne({ userEmail: req.params.email })
+            res.send(result)
+        })
 
 
         //////// data related //////// 
@@ -85,20 +89,39 @@ async function run() {
             res.send(result)
         })
         app.get('/scholarship/:id', async (req, res) => {
-            const result = await scholarshipsCollection.findOne({ _id: new ObjectId(req.params.id) })
+            const result = await scholarshipsCollection.aggregate([
+                {
+                    $match: { _id: new ObjectId(req.params.id) }
+                },
+                {
+                    $lookup: {
+                        from: 'Reviews',
+                        localField: '_id',
+                        foreignField: 'postId',
+                        pipeline: [
+                            { $sort: { _id: -1 } }
+                        ],
+                        as: 'reviews'
+                    }
+                }
+            ]).toArray()
             res.send(result)
         })
-        //////// data related //////// 
 
         //////// review related ////////
 
         app.post('/add-review/:id', async (req, res) => {
             const id = req.params.id
             const review = req.body
-            const result = await reviewCollection.insertOne({ postId: id, review })
+            const result = await reviewCollection.insertOne({ postId: new ObjectId(id), ...review })
             res.send(result)
         })
-        //////// review related ////////
+
+        app.get('/get-reviews/:id', async (req, res) => {
+            const id = req.params.id
+            const result = await reviewCollection.find({ postId: id }).toArray()
+            res.send(result)
+        })
 
 
         // Send a ping to confirm a successful connection

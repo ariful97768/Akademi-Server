@@ -32,8 +32,6 @@ async function run() {
 
         // verify admin 
         const verifyAdmin = async (req, res, next) => {
-            const email = req.query.email;
-            console.log(email);
             const user = await userCollection.findOne({ userEmail: req.query.email });
             const isAdmin = user?.role === 'admin';
             if (!isAdmin) {
@@ -134,9 +132,20 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/get-reviews/:id', async (req, res) => {
+        // app.get('/get-reviews/:id', async (req, res) => {
+        //     const id = req.params.id
+        //     const result = await reviewCollection.find({ postId: id }).toArray()
+        //     res.send(result)
+        // })
+
+        app.get('/all-reviews', verifyAdmin, async (req, res) => {
+            const result = await reviewCollection.find().sort({ $natural: -1 }).toArray()
+            res.send(result)
+        })
+
+        app.delete('/delete-review/:id', verifyAdmin, async (req, res) => {
             const id = req.params.id
-            const result = await reviewCollection.find({ postId: id }).toArray()
+            const result = await reviewCollection.deleteOne({ _id: new ObjectId(id) })
             res.send(result)
         })
 

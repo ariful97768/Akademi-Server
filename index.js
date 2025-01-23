@@ -40,16 +40,17 @@ async function run() {
             next();
         }
 
-        const verifyModerator = async (req, res, next) => {
-            const email = req.decoded.email;
-            const query = { email: email };
-            const user = await userCollection.findOne(query);
-            const isModerator = user?.role === 'moderator';
-            if (!isModerator) {
+        // verify authorization
+        const verifyAuthorization = async (req, res, next) => {
+            const user = await userCollection.findOne({ userEmail: req.query.email });
+            const isAuthorized = user?.role === 'admin' || 'moderator';
+            if (!isAuthorized) {
                 return res.status(403).send({ message: 'forbidden access' });
             }
             next();
         }
+
+
 
         //////// user related //////// 
 
@@ -69,7 +70,7 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/all-users/', verifyAdmin, async (req, res) => {
+        app.get('/all-users', verifyAdmin, async (req, res) => {
             const result = await userCollection.find().toArray()
             res.send(result)
         })
@@ -92,7 +93,7 @@ async function run() {
 
         //////// data related //////// 
 
-        // get data for home page condition => lowest application fee and recently added
+        // get data for home page based on lowest application fee and recently added
         app.get('/', async (req, res) => {
             const result = await scholarshipsCollection.find().sort({ $natural: -1 }).sort({ applicationFees: 1 }).limit(6).toArray();
             res.send(result)
@@ -123,6 +124,12 @@ async function run() {
             res.send(result)
         })
 
+        app.post('/add-scholarship', verifyAdmin, async (req, res) => {
+            const data = req.body
+            const result = await scholarshipsCollection.insertOne(data)
+            res.send(result)
+        })
+
         //////// review related ////////
 
         app.post('/add-review/:id', async (req, res) => {
@@ -138,12 +145,12 @@ async function run() {
         //     res.send(result)
         // })
 
-        app.get('/all-reviews', verifyAdmin, async (req, res) => {
+        app.get('/all-reviews', verifyAuthorization, async (req, res) => {
             const result = await reviewCollection.find().sort({ $natural: -1 }).toArray()
             res.send(result)
         })
 
-        app.delete('/delete-review/:id', verifyAdmin, async (req, res) => {
+        app.delete('/delete-review/:id', verifyAuthorization, async (req, res) => {
             const id = req.params.id
             const result = await reviewCollection.deleteOne({ _id: new ObjectId(id) })
             res.send(result)

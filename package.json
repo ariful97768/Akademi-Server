@@ -10,10 +10,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "\"# b10a12-server-side-ariful97768\""
+  "description": "\"# b10a12-server-side-ariful97768\"",
+  "devDependencies": {}
 }

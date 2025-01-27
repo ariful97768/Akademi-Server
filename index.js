@@ -29,6 +29,7 @@ async function run() {
         const scholarshipsCollection = database.collection("Scholarships");
         const userCollection = database.collection('Users')
         const reviewCollection = database.collection('Reviews')
+        const applicationCollection = database.collection('Application')
 
         // verify admin 
         const verifyAdmin = async (req, res, next) => {
@@ -95,7 +96,7 @@ async function run() {
 
         // get data for home page based on lowest application fee and recently added
         app.get('/', async (req, res) => {
-            const result = await scholarshipsCollection.find().sort({ $natural: -1 }).sort({ applicationFees: 1 }).limit(6).toArray();
+            const result = await scholarshipsCollection.find().sort({ $natural: -1 }).sort({ applicationFees: 1 }).limit(6).toArray()
             res.send(result)
         })
 
@@ -180,28 +181,55 @@ async function run() {
             res.send(result)
         })
 
+        //////// application related ////////
+
+        app.get('/my-application', async (req, res) => {
+            const userId = req.query.userId
+            const result = await applicationCollection.find({ userId: userId }).sort({ $natural: -1 }).toArray()
+            res.send(result)
+        })
+
+        app.post('/add-application', async (req, res) => {
+            const data = req.body
+            const result = await applicationCollection.insertOne(data)
+            res.send(result)
+        })
+
+
+        app.delete('/delete-application/:id', async (req, res) => {
+            const result = await applicationCollection.deleteOne({ _id: new ObjectId(req.params.id) })
+            res.send(result)
+        })
+
+        app.patch('/update-application/:id', async (req, res) => {
+            const result = await applicationCollection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: req.body })
+            res.send(result)
+        })
+
 
         // payment gateway
-        // app.post('/create-payment-intent', async (req, res) => {
-        //     const { amount } = req.body; // Amount should be in the smallest currency unit (e.g., cents for USD)
-        //     try {
-        //         const paymentIntent = await stripe.paymentIntents.create({
-        //             amount,
-        //             currency: 'usd',
-        //             payment_method_types: ['card'],
-        //         });
+        app.post('/create-payment-intent', async (req, res) => {
+            const { price } = req.body;
+            const amount = parseInt(price * 100)
 
-        //         res.send({
-        //             clientSecret: paymentIntent.client_secret,
-        //         });
-        //     } catch (error) {
-        //         res.status(400).send({ error: error.message });
-        //     }
-        // });
+            try {
+                const paymentIntent = await stripe.paymentIntents.create({
+                    amount,
+                    currency: 'usd',
+                    payment_method_types: ['card'],
+                });
+
+                res.send({
+                    clientSecret: paymentIntent.client_secret,
+                });
+            } catch (error) {
+                res.status(400).send({ error: error.message });
+            }
+        });
         // payment gateway
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error

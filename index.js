@@ -79,7 +79,6 @@ async function run() {
         app.delete('/delete-user/:id', verifyAdmin, async (req, res) => {
             const id = req.params.id
             const result = await userCollection.deleteOne({ _id: new ObjectId(req.params.id) })
-            console.log(id);
             res.send(result)
         })
 
@@ -105,6 +104,7 @@ async function run() {
             const result = await scholarshipsCollection.find().toArray()
             res.send(result)
         })
+
         app.get('/scholarship/:id', async (req, res) => {
             const result = await scholarshipsCollection.aggregate([
                 {
@@ -183,6 +183,11 @@ async function run() {
 
         //////// application related ////////
 
+        app.get('/all-application', verifyAuthorization, async (req, res) => {
+            const result = await applicationCollection.find().toArray()
+            res.send(result)
+        })
+
         app.get('/my-application', async (req, res) => {
             const userId = req.query.userId
             const result = await applicationCollection.find({ userId: userId }).sort({ $natural: -1 }).toArray()
@@ -202,6 +207,16 @@ async function run() {
         })
 
         app.patch('/update-application/:id', async (req, res) => {
+            const result = await applicationCollection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: req.body })
+            res.send(result)
+        })
+
+        // app.patch('reject-application/:id', verifyAuthorization, async (req, res) => {
+        //     const result = await applicationCollection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: req.body })
+        //     res.send(result)
+        // })
+
+        app.patch('/update-feedback/:id', verifyAuthorization, async (req, res) => {
             const result = await applicationCollection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: req.body })
             res.send(result)
         })

@@ -144,6 +144,16 @@ async function run() {
             res.send(result)
         })
 
+        app.get('/all-collections-data', async (req, res) => {
+            const scholarships = await scholarshipsCollection.find().toArray()
+            const users = await userCollection.find().toArray()
+            const reviews = await reviewCollection.find().toArray()
+            const application = await applicationCollection.find().toArray()
+            const result = [scholarships, users, reviews, application]
+            res.send(result)
+        });
+
+
         //////// review related ////////
 
         app.post('/add-review/:id', async (req, res) => {

@@ -1,4 +1,3 @@
-# b10a12-server-side-ariful97768
 # Akademi Backend
 
 This is the backend service for the Akademi Scholarship Management System. It handles user authentication, scholarship data management, reviews, and payment integration. The backend is built using Node.js, Express.js, MongoDB, and integrates with Stripe for payment processing.
